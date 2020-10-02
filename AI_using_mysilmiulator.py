@@ -1,0 +1,211 @@
+import pygame
+import time
+import sys
+import random
+pygame.init()
+white = (255,255,255)
+black = (0,0,0)
+red = (255,0,0)
+green = (130,255,110)
+display_width = 800
+display_length = 800
+gameDisplay = pygame.display.set_mode((display_width,display_length))
+pygame.display.set_caption('slither')
+icon = pygame.image.load("snakiii.jpeg") # NO ICON DISPLAYING
+pygame.display.set_icon(icon)
+img = pygame.image.load('tr.png').convert_alpha()
+img = pygame.transform.scale(img, (35, 35)).convert_alpha()
+applesimg = pygame.image.load("apple.png")
+applesimg = pygame.transform.scale(applesimg, (35, 30)).convert_alpha()
+font = pygame.font.SysFont(None,35)
+smallfont = pygame.font.SysFont("comicsansms",35)
+middelfont = pygame.font.SysFont("comic sans ms",55)
+largefont = pygame.font.SysFont("comicsansms",85)
+clock = pygame.time.Clock()
+FPS = 12
+direction = 'right'
+#####################################################################
+class NodeType:
+    empty, snake_head, food, wall = range(4)
+#Grid constants
+screen_size = (50,50)
+columns, rows = screen_size[0], screen_size[1];
+def getGrid():
+    grid = [[0 for x in range(columns)] for y in range(rows)]
+
+    for x in range(columns):
+        grid[x][0] = NodeType.wall
+        grid[x][columns-1] = NodeType.wall
+
+    for y in range(rows):
+        grid[0][y] = NodeType.wall
+        grid[rows-1][y] = NodeType.wall
+    return grid
+####################################################################
+def appleGen(objectsize):
+	randappleX = round(random.randrange(0,display_width - block_size))#/10.0)*10.0
+	randappleY = round(random.randrange(0,display_length - block_size))#/10.0)*10.0	
+
+def snake(gameDisplay, color,snakelist, block_size):
+	if direction == 'right':
+		head = pygame.transform.rotate(img, 270)
+	if direction == 'left':
+		head = pygame.transform.rotate(img, 90)
+	if direction == 'up':
+		head = img
+	if direction == 'down':
+		head = pygame.transform.rotate(img, 180)			
+	for x,y in snakelist:
+		gameDisplay.blit(head,(snakelist[-1][0], snakelist[-1][1]))
+		pygame.display.update()
+	for x,y in snakelist[:-1]:
+		pygame.draw.rect(gameDisplay,color,[x,y,block_size,block_size])
+
+def text_objects(text,color,size):
+	if size == 'small':
+		textSurface = smallfont.render(text, True, color)
+	if size == 'middel':
+		textSurface = middelfont.render(text, True, color)
+	if size == 'large':
+		textSurface = largefont.render(text, True, color)		
+	return textSurface, textSurface.get_rect()			
+#def message_to_screen(msg,color):
+#	screen_text = font.render(msg,True,red)
+#	gameDisplay.blit(screen_text, [150,50])
+def message_to_screen(msg,color,y_displace=0,size='small'):
+	textSurf, textRect = text_objects(msg,color,size)
+	textRect.center = (display_width/2), (display_length/2)+y_displace
+	gameDisplay.blit(textSurf, textRect) 
+def text_screen(text,color,x,y):
+	font = pygame.font.SysFont(None,50)
+	screen_text = font.render(text,True,color)
+	gameDisplay.blit(screen_text,[x,y])
+def game_intro():
+	intro = True	
+	while intro:
+		for event in pygame.event.get():
+			if event.type == pygame.QUIT:
+					pygame.quit()
+					quit()
+			if event.type == pygame.KEYDOWN:
+				if event.key == pygame.K_q:
+					pygame.quit()
+					quit()
+				if event.key == pygame.K_c:
+					gameLoop()		
+		gameDisplay.fill(white)
+		message_to_screen("Welcome to Slither",green,-100,"large")
+		message_to_screen("The objective of the game is to eat eat red apples",black,-30,)
+		message_to_screen("The more apples you eat, the longer you get",black,10,)
+		message_to_screen("If you run into yourself, or the edges, you die!",black,50,)
+		message_to_screen("Press C to play or Q to quit.",black,180,)
+		pygame.display.update()
+		clock.tick(15)
+			
+def gameLoop():
+	global direction
+	global gameExit
+	gameExit = False
+	global gameOver
+	gameOver = False
+	Score = 0
+	block_size = 35
+	lead_x = display_length/2
+	lead_y = display_width/2
+	lead_x_change = 0
+	lead_y_change = 0
+	dx = 20
+	randappleX = round(random.randrange(0,display_width - block_size))#/10.0)*10.0
+	randappleY = round(random.randrange(0,display_length - block_size))#/10.0)*10.0
+	snakelist = []
+	snakelength = 1
+	while not gameExit:
+		while gameOver == True:
+			gameDisplay.fill(white)
+			message_to_screen("Game Over !!!", red, -50, size = 'middel')
+			message_to_screen("Press C to play again or Q to quit.", black, 50, size = 'small')
+			text_screen("Score: " +str(Score),green,320,380)
+			pygame.display.update()
+			for event in pygame.event.get():
+				if event.type == pygame.QUIT:
+					gameExit = True
+					gameOver = False
+				if event.type == pygame.KEYDOWN:
+					if event.key == pygame.K_q:
+						gameExit = True
+						gameOver = False
+					if event.key == pygame.K_c:
+						gameLoop()				
+		for event in pygame.event.get():
+			pygame.init()
+			if event.type == pygame.QUIT:
+				gameExit = True 
+			if event.type == pygame.KEYDOWN:
+				if event.key  == pygame.K_LEFT:
+					direction = 'left'
+					lead_x_change -= dx
+					lead_y_change = 0
+				elif event.key == pygame.K_RIGHT:
+					direction = 'right'
+					lead_x_change += dx
+					lead_y_change = 0
+				elif event.key  == pygame.K_DOWN:
+					direction = 'down'
+					lead_y_change += dx
+					lead_x_change = 0
+				elif event.key == pygame.K_UP:
+					direction = 'up'
+					lead_y_change -= dx
+					lead_x_change = 0
+				elif event.key == pygame.K_RETURN:
+					Score += 10
+			if lead_x < 0 or lead_x>= display_width or lead_y < 0 or lead_y>= display_length:
+				gameOver = True
+		lead_x += lead_x_change
+		lead_y += lead_y_change	
+		gameDisplay.fill(white)
+		text_screen("Score:"+str(Score),red,5,5)
+		AppleThickness = 55
+		#pygame.draw.rect(gameDisplay, red, [randappleX, randappleY, AppleThickness, AppleThickness])
+		gameDisplay.blit(applesimg, (randappleX, randappleY))
+		snake(gameDisplay, green, snakelist, block_size)
+		snakehead = []
+		snakehead.append(lead_x)
+		snakehead.append(lead_y)
+		snakelist.append(snakehead)
+		if len(snakelist) > snakelength:
+			del snakelist[0]
+		for eachSegment in snakelist[:-1]:
+			if eachSegment == snakehead:
+				gameOver = True	
+		pygame.display.update()
+		if (lead_x>randappleX and lead_x<randappleX+AppleThickness or 
+			lead_x+block_size>randappleX and lead_x+block_size<randappleX+AppleThickness):
+			if lead_y > randappleY  and lead_y < randappleY + AppleThickness:
+				randappleX = round(random.randrange(0,display_width - AppleThickness))#/10.0)*10.0
+				randappleY = round(random.randrange(0,display_length - AppleThickness))#/10.0)*10.0
+				Score += 10
+				snakelength += 1
+			elif lead_y + block_size> randappleY  and lead_y + block_size < randappleY + AppleThickness:	
+				randappleX = round(random.randrange(0,display_width - AppleThickness))#/10.0)*10.0
+				randappleY = round(random.randrange(0,display_length - AppleThickness))#/10.0)*10.0
+				Score += 10
+				snakelength += 1
+		clock.tick(FPS)
+		network = fully_connected(network, 25, activation='relu')
+		network = fully_connected(network, 1, activation='linear')
+		network = regression(network,optimizer='adam', learning_rate=1e-2, loss='mean_square',name='target')
+		model = tflearn.DNN(network)    
+
+
+		# sanke will be moving randomly through the help of random function
+		# then store all the random moves if max_points>max_points=>max_points=max(max_points,points):
+		# or just points>0=True:
+		# then parameters will be
+		# x,y
+		data = pds.read_csv("Data.csv",usecols=[1,2,3,4,5])
+		labels = pds.read_csv("Data.csv",usecols=[0])
+		model = getTrainedModel(data,labels)
+	pygame.quit()
+game_intro()	
+gameLoop()
